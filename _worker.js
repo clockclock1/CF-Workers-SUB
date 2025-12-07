@@ -228,8 +228,8 @@ async function ADD(envadd) {
 }
 
 async function nginx() {
-	const text = `
-	<!DOCTYPE html>
+    return `
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -238,7 +238,7 @@ async function nginx() {
     <style>
         body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', sans-serif; }
         canvas { display: block; }
-        
+       
         /* UI Panel Styling */
         #ui-container {
             position: absolute;
@@ -254,15 +254,14 @@ async function nginx() {
             z-index: 10;
             transition: transform 0.3s ease;
         }
-
         h2 { margin: 0 0 15px 0; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px; }
-        
+       
         .control-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8; }
-        
+       
         /* Buttons Grid */
         .shape-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
+       
         button {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -273,13 +272,12 @@ async function nginx() {
             transition: all 0.2s;
             font-size: 0.85rem;
         }
-        
+       
         button:hover, button.active {
             background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.5);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
-
         /* Color Picker */
         input[type="color"] {
             width: 100%;
@@ -289,7 +287,6 @@ async function nginx() {
             cursor: pointer;
             background: transparent;
         }
-
         /* Status Indicator */
         #status {
             position: absolute;
@@ -308,14 +305,12 @@ async function nginx() {
             margin-right: 8px;
         }
         .dot.active { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
-
         /* Fullscreen Button */
         .fs-btn { width: 100%; margin-top: 10px; font-weight: bold; }
-
         /* Hidden Video for MediaPipe */
         #input-video { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
     </style>
-    
+   
     <script type="importmap">
         {
             "imports": {
@@ -328,83 +323,72 @@ async function nginx() {
     </script>
 </head>
 <body>
-
     <div id="status"><span class="dot" id="cam-dot"></span><span id="status-text">初始化摄像头...</span></div>
-
     <div id="ui-container">
-        <h2>✨ 粒子控制器</h2>
-        
+        <h2>粒子控制器</h2>
+       
         <div class="control-group">
             <label>切换形状 (Morph)</label>
             <div class="shape-grid">
-                <button onclick="setShape('heart', this)" class="active">❤️ 爱心</button>
-                <button onclick="setShape('flower', this)">🌸 花朵</button>
-                <button onclick="setShape('saturn', this)">🪐 土星</button>
-                <button onclick="setShape('torus', this)">🧘 佛系(环结)</button>
-                <button onclick="setShape('fireworks', this)">🎆 烟花</button>
-                <button onclick="setShape('sphere', this)">🔮 球体</button>
+                <button onclick="setShape('heart', this)" class="active">爱心</button>
+                <button onclick="setShape('flower', this)">花朵</button>
+                <button onclick="setShape('saturn', this)">土星</button>
+                <button onclick="setShape('torus', this)">佛系(环结)</button>
+                <button onclick="setShape('fireworks', this)">烟花</button>
+                <button onclick="setShape('sphere', this)">球体</button>
             </div>
         </div>
-
         <div class="control-group">
             <label>粒子颜色</label>
             <input type="color" id="color-picker" value="#00ffff">
         </div>
-
         <div class="control-group">
             <label>显示相机预览</label>
             <input type="checkbox" id="preview-toggle">
         </div>
-
         <div class="control-group">
             <label>性能模式（提速）</label>
             <input type="checkbox" id="perf-toggle">
         </div>
-
-        <button class="fs-btn" onclick="toggleFullScreen()">⛶ 全屏模式</button>
+        <button class="fs-btn" onclick="toggleFullScreen()">全屏模式</button>
     </div>
-
     <video id="input-video" playsinline autoplay muted></video>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        
+       
         // 全局变量
         let camera, scene, renderer, controls;
         let particles, geometry, material;
-        let positions = []; 
+        let positions = [];
         let currentPositions = [];
         let targetPositions = [];
         let jitter = [];
         let hands, cameraUtils;
         let HANDS_INTERVAL = 1000 / 30;
         let performanceMode = false;
-        
+       
         const IS_LOW_END = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4);
         const PARTICLE_COUNT = 15000;
         const BOX_SIZE = 400;
         let currentShape = 'heart';
-        
+       
         // 手势控制变量
-        let handScale = 1.0;     // 由双手距离控制
-        let handSpread = 0.0;    // 由捏合控制
+        let handScale = 1.0;
+        let handSpread = 0.0;
         let targetColor = new THREE.Color(0x00ffff);
 
-        // 初始化
         init();
         initMediaPipe();
         animate();
 
         function init() {
-            // 1. Scene Setup
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x050505, 0.002);
-
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
             camera.position.z = 100;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer = new THREE.WebGLRenderer({ antalias: true, powerPreference: 'high-performance' });
             renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
@@ -414,18 +398,13 @@ async function nginx() {
             controls.autoRotate = true;
             controls.autoRotateSpeed = 0.5;
 
-            // 2. Particle System Setup
             geometry = new THREE.BufferGeometry();
             const posArray = new Float32Array(PARTICLE_COUNT * 3);
-            
-            // 初始化位置（随机）
             for(let i = 0; i < PARTICLE_COUNT * 3; i++) {
                 posArray[i] = (Math.random() - 0.5) * BOX_SIZE;
             }
-
             geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            
-            // 保存位置引用
+           
             currentPositions = posArray;
             targetPositions = new Float32Array(PARTICLE_COUNT * 3);
             jitter = new Float32Array(PARTICLE_COUNT * 3);
@@ -433,9 +412,7 @@ async function nginx() {
                 jitter[i] = (Math.random() - 0.5);
             }
 
-            // 生成纹理 (简单的发光点)
             const sprite = createTexture();
-
             material = new THREE.PointsMaterial({
                 size: 0.8,
                 color: targetColor,
@@ -445,14 +422,11 @@ async function nginx() {
                 transparent: true,
                 opacity: 0.85
             });
-
             particles = new THREE.Points(geometry, material);
             scene.add(particles);
 
-            // 初始生成爱心形状
             generateShape('heart');
 
-            // 事件监听
             window.addEventListener('resize', onWindowResize);
             document.getElementById('color-picker').addEventListener('input', (e) => {
                 targetColor.set(e.target.value);
@@ -478,47 +452,23 @@ async function nginx() {
                 performanceMode = e.target.checked;
                 HANDS_INTERVAL = performanceMode ? (1000 / 20) : (1000 / 30);
             });
-
-            renderer.domElement.addEventListener('webglcontextlost', (e) => {
-                e.preventDefault();
-                const statusText = document.getElementById('status-text');
-                statusText.innerText = '渲染器上下文丢失，正在恢复...';
-            }, false);
-            renderer.domElement.addEventListener('webglcontextrestored', () => {
-                const statusText = document.getElementById('status-text');
-                statusText.innerText = '渲染器已恢复';
-            }, false);
         }
-
-        // --- 形状生成逻辑 ---
 
         function generateShape(type) {
             const positions = targetPositions;
-            const scale = 30; // 基础缩放
-
+            const scale = 30;
             if (type === 'heart') {
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    // 使用 3D 爱心公式
                     const t = Math.random() * Math.PI * 2;
-                    const u = Math.random() * Math.PI;
-                    // 稍微复杂的变体或简单参数方程
-                    let x, y, z;
-                    // Heart curve approximation
-                    let phi = Math.random() * Math.PI * 2;
-                    let theta = Math.random() * Math.PI;
-                    
-                    // 经典的 parametric heart
-                    x = 16 * Math.pow(Math.sin(t), 3);
-                    y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                    z = (Math.random() - 0.5) * 10; // 给一点厚度
-                    
-                    // 为了让爱心更饱满，我们在内部随机分布
+                    let x = 16 * Math.pow(Math.sin(t), 3);
+                    let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                    let z = (Math.random() - 0.5) * 10;
                     const r = Math.random();
                     positions[i * 3] = x * scale * 0.1 * r + (Math.random()-0.5)*2;
                     positions[i * 3 + 1] = y * scale * 0.1 * r + (Math.random()-0.5)*2;
                     positions[i * 3 + 2] = z * r;
                 }
-            } 
+            }
             else if (type === 'sphere') {
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
                     const radius = 40;
@@ -532,7 +482,6 @@ async function nginx() {
             else if (type === 'saturn') {
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
                     const r = Math.random();
-                    // 70% 粒子在球体，30% 在环
                     if (r > 0.3) {
                         const radius = 25;
                         const theta = Math.random() * Math.PI * 2;
@@ -541,40 +490,31 @@ async function nginx() {
                         positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
                         positions[i * 3 + 2] = radius * Math.cos(phi);
                     } else {
-                        // 环
                         const angle = Math.random() * Math.PI * 2;
                         const ringRadius = 35 + Math.random() * 20;
                         positions[i * 3] = Math.cos(angle) * ringRadius;
-                        positions[i * 3 + 1] = (Math.random() - 0.5) * 2; // 薄环
+                        positions[i * 3 + 1] = (Math.random() - 0.5) * 2;
                         positions[i * 3 + 2] = Math.sin(angle) * ringRadius;
                     }
                 }
             }
             else if (type === 'flower') {
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    // Rose curve (polar) extended to 3D
                     const theta = Math.random() * Math.PI * 2;
-                    const k = 4; // 花瓣数
+                    const k = 4;
                     const r = Math.cos(k * theta) * 40;
-                    
-                    // 添加层叠效果
                     const depth = (Math.random() - 0.5) * 15;
-                    
                     positions[i * 3] = r * Math.cos(theta) + (Math.random()-0.5)*5;
                     positions[i * 3 + 1] = r * Math.sin(theta) + (Math.random()-0.5)*5;
                     positions[i * 3 + 2] = Math.sin(r * 0.1) * 10 + depth;
                 }
             }
             else if (type === 'torus') {
-                // 代替 "佛像" 的复杂几何结构 (Torus Knot)
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    const u = Math.random() * Math.PI * 2 * 3; // 3 loops
+                    const u = Math.random() * Math.PI * 2 * 3;
                     const v = Math.random() * Math.PI * 2;
-                    
-                    // Torus knot formula
                     const p = 2, q = 3;
                     const r = 20 * (2 + Math.cos(q * u / p));
-                    
                     positions[i * 3] = r * Math.cos(u) + (Math.random()-0.5)*2;
                     positions[i * 3 + 1] = r * Math.sin(u) + (Math.random()-0.5)*2;
                     positions[i * 3 + 2] = 20 * Math.sin(q * u / p) + (Math.random()-0.5)*2;
@@ -582,11 +522,9 @@ async function nginx() {
             }
             else if (type === 'fireworks') {
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    // Explosion from center
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos((Math.random() * 2) - 1);
-                const r = Math.random() * 60; // Spread out
-                    
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos((Math.random() * 2) - 1);
+                    const r = Math.random() * 60;
                     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
                     positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
                     positions[i * 3 + 2] = r * Math.cos(phi);
@@ -594,12 +532,9 @@ async function nginx() {
             }
         }
 
-        // 暴露给全局以便 HTML 按钮调用
         window.setShape = function(shape, el) {
             currentShape = shape;
             generateShape(shape);
-            
-            // Update UI active state
             document.querySelectorAll('.shape-grid button').forEach(btn => btn.classList.remove('active'));
             if (el) el.classList.add('active');
         }
@@ -607,62 +542,54 @@ async function nginx() {
         window.toggleFullScreen = function() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
             }
         }
 
-        // --- 动画循环 ---
-
         function animate() {
             requestAnimationFrame(animate);
-
             const positions = particles.geometry.attributes.position.array;
             const cp = currentPositions;
             const tp = targetPositions;
             const jit = jitter;
             const s = handScale;
             const sp = handSpread;
-            
-            // 颜色平滑过渡
+
             particles.material.color.lerp(targetColor, 0.05);
 
             for (let i = 0, px = 0; i < PARTICLE_COUNT; i++, px += 3) {
                 const py = px + 1;
                 const pz = px + 2;
-
                 let tx = tp[px] * s;
                 let ty = tp[py] * s;
                 let tz = tp[pz] * s;
-
                 if (sp > 0.05) {
                     tx += jit[px] * sp * 200;
                     ty += jit[py] * sp * 200;
                     tz += jit[pz] * sp * 200;
                 }
-
                 cp[px] += (tx - cp[px]) * 0.2;
                 cp[py] += (ty - cp[py]) * 0.2;
                 cp[pz] += (tz - cp[pz]) * 0.2;
             }
             particles.geometry.attributes.position.needsUpdate = true;
-            
+
             controls.update();
             renderer.render(scene, camera);
         }
 
         function createTexture() {
             const canvas = document.createElement('canvas');
-            canvas.width = 32;
-            canvas.height = 32;
-            const context = canvas.getContext('2d');
-            const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+            canvas.width = canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
             gradient.addColorStop(0, 'rgba(255,255,255,1)');
             gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
             gradient.addColorStop(0.5, 'rgba(255,255,255,0.2)');
             gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            context.fillStyle = gradient;
-            context.fillRect(0, 0, 32, 32);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 32, 32);
             const texture = new THREE.Texture(canvas);
             texture.needsUpdate = true;
             return texture;
@@ -674,55 +601,22 @@ async function nginx() {
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- MediaPipe Hands 集成 ---
-
-        async function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const s = document.createElement('script');
-                s.src = src;
-                s.crossOrigin = 'anonymous';
-                s.onload = resolve;
-                s.onerror = reject;
-                document.head.appendChild(s);
-            });
-        }
-
-        async function loadMediaPipeScripts() {
-            await Promise.all([
-                loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js'),
-                loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')
-            ]);
-            return { Hands: window.Hands, Camera: window.Camera };
-        }
-
         async function initMediaPipe() {
             const videoElement = document.getElementById('input-video');
             const statusDot = document.getElementById('cam-dot');
             const statusText = document.getElementById('status-text');
-
             statusText.innerText = "正在请求摄像头权限...";
 
-            const insecure = location.protocol !== 'https:' && !['localhost','127.0.0.1'].includes(location.hostname);
-            if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-                statusText.innerText = insecure ? "需在HTTPS或localhost运行以访问摄像头" : "浏览器不支持摄像头";
+            const Hands = window.Hands;
+            const Camera = window.Camera;
+
+            if (!Hands || !Camera) {
+                statusText.innerText = "MediaPipe 加载失败";
                 return;
             }
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                stream.getTracks().forEach(t => t.stop());
-            } catch (e) {
-                statusText.innerText = insecure ? "请在HTTPS或localhost并允许摄像头权限" : "已拒绝或无法访问摄像头";
-                return;
-            }
-
-            let Hands, Camera;
-            ({ Hands, Camera } = await loadMediaPipeScripts());
 
             hands = new Hands({
-                locateFile: (file) => {
-                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-                }
+                locateFile: (file) => \`https://cdn.jsdelivr.net/npm/@mediapipe/hands/\${file}\`
             });
 
             hands.setOptions({
@@ -731,7 +625,6 @@ async function nginx() {
                 minDetectionConfidence: 0.5,
                 minTrackingConfidence: 0.5
             });
-
             hands.onResults(onHandsResults);
 
             let lastHandsTime = 0;
@@ -747,32 +640,19 @@ async function nginx() {
                 height: 480
             });
 
-            const startPromise = cameraUtils.start();
-            const timer = setTimeout(() => {
-                if (statusText.innerText.includes("初始化摄像头") || statusText.innerText.includes("正在请求")) {
-                    statusText.innerText = "等待授权或设备响应...";
-                }
-            }, 8000);
-
-            startPromise
-                .then(() => {
-                    clearTimeout(timer);
-                    statusDot.classList.add('active');
-                    statusText.innerText = "摄像头已激活 | 手势: 双手张开缩放，捏合扩散";
-                    videoElement.play().catch(()=>{});
-                })
-                .catch(err => {
-                    clearTimeout(timer);
-                    statusText.innerText = insecure ? "摄像头启动失败 (需在HTTPS或localhost运行)" : "摄像头启动失败 (请允许权限)";
-                    console.error(err);
-                });
+            cameraUtils.start().then(() => {
+                statusDot.classList.add('active');
+                statusText.innerText = "摄像头已激活 | 手势: 双手张开缩放，捏合扩散";
+            }).catch(err => {
+                statusText.innerText = "摄像头启动失败，请允许权限";
+                console.error(err);
+            });
         }
 
         function onHandsResults(results) {
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 const landmarks = results.multiHandLandmarks;
 
-                // 逻辑 1: 双手控制缩放 (Two Hands)
                 if (landmarks.length === 2) {
                     const hand1 = landmarks[0][9];
                     const hand2 = landmarks[1][9];
@@ -780,36 +660,27 @@ async function nginx() {
                     const targetScale = 0.5 + (dist * 2.5);
                     handScale = handScale * 0.7 + targetScale * 0.3;
                 } else {
-                    handScale =  handScale * 0.95 + 1.0 * 0.05;
+                    handScale = handScale * 0.95 + 1.0 * 0.05;
                 }
 
-                // 逻辑 2: 捏合控制扩散 (Pinch - Index & Thumb)
-                // 检查任意一只手是否捏合
                 let maxPinch = 0;
                 landmarks.forEach(hand => {
                     const thumb = hand[4];
                     const index = hand[8];
                     const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
-                    // 连续映射：pinchDist <= 0.05 -> 1.0；pinchDist >= 0.10 -> 0.0
                     const spread = Math.max(0, Math.min(1, (0.10 - pinchDist) / 0.05));
                     maxPinch = Math.max(maxPinch, spread);
                 });
-
-                // 较快的平滑过渡以提升响应
                 handSpread = handSpread * 0.6 + maxPinch * 0.4;
-
             } else {
-                // 无手势时复位
                 handScale = handScale * 0.95 + 1.0 * 0.05;
                 handSpread = handSpread * 0.9;
             }
         }
     </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"908efc65e00446f592a0c49fcab04d58","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
-	`
-	return text;
+    `;
 }
 
 async function sendMessage(type, ip, add_data = "") {
@@ -1381,3 +1252,4 @@ async function KV(request, env, txt = 'ADD.txt', guest) {
 	}
 
 }
+
